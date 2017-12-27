@@ -1,45 +1,43 @@
-﻿using System;
-using System.Windows.Forms;
-using System.Linq;
+﻿using System.Linq;
 using GlobalHotKey;
 
 namespace JakesSoundboard
 {
-	public partial class Form1 : Form
+	public partial class Form1 : System.Windows.Forms.Form
 	{
 		// Initialisation
 		private IDropTargetHelper DropTargetHelper;
-		void Form_DragEnter(object sender, DragEventArgs e)
+		void Form_DragEnter(object sender, System.Windows.Forms.DragEventArgs e)
 		{
-			if (e.Data.GetDataPresent(DataFormats.FileDrop))
+			if (e.Data.GetDataPresent(System.Windows.Forms.DataFormats.FileDrop))
 			{
-				string[] Paths = (string[])e.Data.GetData(DataFormats.FileDrop);
-				if (Paths.Length == 1)
+				string[] Paths = (string[])e.Data.GetData(System.Windows.Forms.DataFormats.FileDrop);
+				if (Paths.Length >= 1)
 				{
-					e.Effect = DragDropEffects.Move;
+					e.Effect = System.Windows.Forms.DragDropEffects.Move;
 					if (this.DropTargetHelper != null)
 					{
 						try
 						{
 							this.DropTargetHelper.DragEnter(this.Handle, (System.Runtime.InteropServices.ComTypes.IDataObject)e.Data, new System.Drawing.Point(e.X, e.Y), (int)e.Effect);
 						}
-						catch (Exception) { }
+						catch (System.Exception) { }
 					}
 					return;
 				}
 			}
-			e.Effect = DragDropEffects.None;
+			e.Effect = System.Windows.Forms.DragDropEffects.None;
 			if (this.DropTargetHelper != null)
 			{
 				try
 				{
 					this.DropTargetHelper.DragEnter(this.Handle, (System.Runtime.InteropServices.ComTypes.IDataObject)e.Data, new System.Drawing.Point(e.X, e.Y), (int)e.Effect);
 				}
-				catch (Exception) { }
+				catch (System.Exception) { }
 			}
 		}
 
-		void Form_DragDrop(object sender, DragEventArgs e)
+		void Form_DragDrop(object sender, System.Windows.Forms.DragEventArgs e)
 		{
 			if (this.DropTargetHelper != null)
 			{
@@ -47,13 +45,13 @@ namespace JakesSoundboard
 				{
 					this.DropTargetHelper.Drop((System.Runtime.InteropServices.ComTypes.IDataObject)e.Data, new System.Drawing.Point(e.X, e.Y), (int)e.Effect);
 				}
-				catch (Exception) { }
+				catch (System.Exception) { }
 			}
-			string[] FileList = (string[])e.Data.GetData(DataFormats.FileDrop, false);
-			this.BeginInvoke(new Action<string>(this.AddSound), new string[] { FileList[0] });
+			string[] FileList = (string[])e.Data.GetData(System.Windows.Forms.DataFormats.FileDrop, false);
+			this.BeginInvoke(new System.Action<string[]>(this.AddSound), new object[] { FileList });
 		}
 
-		void Form_DragLeave(object sender, EventArgs e)
+		void Form_DragLeave(object sender, System.EventArgs e)
 		{
 			if (this.DropTargetHelper != null)
 			{
@@ -61,11 +59,11 @@ namespace JakesSoundboard
 				{
 					this.DropTargetHelper.DragLeave();
 				}
-				catch (Exception) { }
+				catch (System.Exception) { }
 			}
 		}
 
-		void Form_DragOver(object sender, DragEventArgs e)
+		void Form_DragOver(object sender, System.Windows.Forms.DragEventArgs e)
 		{
 			if (this.DropTargetHelper != null)
 			{
@@ -73,7 +71,7 @@ namespace JakesSoundboard
 				{
 					this.DropTargetHelper.DragOver(new System.Drawing.Point(e.X, e.Y), (int)e.Effect);
 				}
-				catch (Exception) { }
+				catch (System.Exception) { }
 			}
 		}
 
@@ -84,10 +82,10 @@ namespace JakesSoundboard
 			InitializeComponent();
 		}
 
-		public string SaveFileLocation = Application.StartupPath + System.IO.Path.DirectorySeparatorChar + "Data.jsub";
+		public string SaveFileLocation = System.Windows.Forms.Application.StartupPath + System.IO.Path.DirectorySeparatorChar + "Data.jsub";
 		private SaveFile UserData;
 
-		private void Form1_Load(object sender, EventArgs e)
+		private void Form1_Load(object sender, System.EventArgs e)
 		{
 			this.Text = this.ProductName + " (" + this.ProductVersion + ")";
 			this.UserData = new SaveFile();
@@ -115,13 +113,14 @@ namespace JakesSoundboard
 			}
 
 			this.AllowDrop = true;
-			this.DragEnter += new DragEventHandler(this.Form_DragEnter);
-			this.DragDrop += new DragEventHandler(this.Form_DragDrop);
-			this.DragLeave += new EventHandler(this.Form_DragLeave);
-			this.DragOver += new DragEventHandler(this.Form_DragOver);
+			this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form_DragEnter);
+			this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form_DragDrop);
+			this.DragLeave += new System.EventHandler(this.Form_DragLeave);
+			this.DragOver += new System.Windows.Forms.DragEventHandler(this.Form_DragOver);
 
 			this.PopulateDevices();
 			this.PopulateSounds();
+			this.checkBox1.Checked = this.UserData.LoopEnabled;
 
 			this.HotKeyManager.Register(System.Windows.Input.Key.F5, System.Windows.Input.ModifierKeys.Control);
 
@@ -132,7 +131,7 @@ namespace JakesSoundboard
 
 		public void DisposeWave()
 		{
-			throw new NotImplementedException();
+			throw new System.NotImplementedException();
 		}
 
 		public void PlaySound(string FileName, int DeviceNumber)
@@ -153,7 +152,7 @@ namespace JakesSoundboard
 			{
 				this.listView1.Items.Clear();
 				foreach (var Sound in this.UserData.Sounds)
-					this.AddSoundToList(Sound.FilePath, Sound.HotKeyControl, Sound.HotKeyAlt, Sound.HotKeyShift, Sound.Key);
+					this.AddSoundToList(Sound);
 			}
 			finally
 			{
@@ -184,70 +183,88 @@ namespace JakesSoundboard
 			}
 		}
 
-		private void AddSoundToList(string Path, bool HKControl = false, bool HKAlt = false, bool HKShift = false, System.Windows.Forms.Keys UsedHotKey = System.Windows.Forms.Keys.None)
+		private void AddSoundToList(SaveFile.Sound Snd)
 		{
-			ListViewItem Item = new ListViewItem
+
+			System.Windows.Forms.ListViewItem Item = new System.Windows.Forms.ListViewItem
 			{
-				Text = System.IO.Path.GetFileNameWithoutExtension(Path)
+				Text = System.IO.Path.GetFileNameWithoutExtension(Snd.FilePath)
 			};
 
 			string HotKeyPreview = "";
-			System.Windows.Forms.KeysConverter KeyConverter = new System.Windows.Forms.KeysConverter();
 
-			if (HKControl)
-				HotKeyPreview += KeyConverter.ConvertToString(System.Windows.Forms.Keys.Control);
-			if (HKAlt)
-				HotKeyPreview += (HotKeyPreview.Length != 0 ? "+" : "") + KeyConverter.ConvertToString(System.Windows.Forms.Keys.Alt);
-			if (HKShift)
-				HotKeyPreview += (HotKeyPreview.Length != 0 ? "+" : "") + KeyConverter.ConvertToString(System.Windows.Forms.Keys.Shift);
-			if (UsedHotKey != System.Windows.Forms.Keys.None)
-				HotKeyPreview += (HotKeyPreview.Length != 0 ? "+" : "") + KeyConverter.ConvertToString(UsedHotKey);
+			if (Snd.HasHotKey)
+			{
+				System.Windows.Forms.KeysConverter KeyConverter = new System.Windows.Forms.KeysConverter();
 
+				if (Snd.HotKeyControl)
+					HotKeyPreview += KeyConverter.ConvertToString(System.Windows.Forms.Keys.Control);
+				if (Snd.HotKeyAlt)
+					HotKeyPreview += (HotKeyPreview.Length != 0 ? "+" : "") + KeyConverter.ConvertToString(System.Windows.Forms.Keys.Alt);
+				if (Snd.HotKeyShift)
+					HotKeyPreview += (HotKeyPreview.Length != 0 ? "+" : "") + KeyConverter.ConvertToString(System.Windows.Forms.Keys.Shift);
+				if (Snd.Key != System.Windows.Forms.Keys.None)
+					HotKeyPreview += (HotKeyPreview.Length != 0 ? "+" : "") + KeyConverter.ConvertToString(Snd.Key);
+			}
 
 			Item.SubItems.Add(HotKeyPreview.Length != 0 ? HotKeyPreview : "(none)");
+
+			Snd.Item = Item;
 
 			this.listView1.Items.Add(Item);
 		}
 
-		private void AddSound(string Path)
+		private void AddSound(string[] Path2)
 		{
-			if (System.IO.Directory.Exists(Path))
+			foreach (string Path in Path2)
 			{
-				LucasStuff.Message.Show("Folders are not supported.", "No Support", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
+				if (System.IO.Directory.Exists(Path))
+				{
+					LucasStuff.Message.Show("Folders are not supported.", "No Support", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
 
-				return;
+					return;
+				}
+
+				string PathExtension = System.IO.Path.GetExtension(Path).ToUpperInvariant().Substring(1);
+
+				if (!SaveFile.SupportedFormats.Contains(PathExtension))
+				{
+					LucasStuff.Message.Show("File format not supported. " + PathExtension + " is not a valid music file.", "No Support", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
+
+					return;
+				}
+
+				foreach (SaveFile.Sound Snd in this.UserData.Sounds)
+				{
+					if (Snd.FilePath == Path)
+					{
+						this.listView1.SelectedItems.Clear();
+						Snd.Item.Selected = true;
+						return;
+					}
+				}
+
+				this.AddSoundToList(this.UserData.AddSound(Path));
 			}
-
-			string PathExtension = System.IO.Path.GetExtension(Path).ToUpperInvariant().Substring(1);
-			
-			if (!SaveFile.SupportedFormats.Contains(PathExtension))
-			{
-				LucasStuff.Message.Show("File format not supported. " + PathExtension + " is not a valid music file.", "No Support", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
-
-				return;
-			}
-
-			this.AddSoundToList(Path);
-			this.UserData.AddSound(Path);
 			this.UserData.Save(this.SaveFileLocation);
 		}
 
 		private void HotKeyManagerHandler(object sender, KeyPressedEventArgs e)
 		{
-			throw new NotImplementedException();
+			throw new System.NotImplementedException();
 		}
 
-		private void Button1_Click(object sender, EventArgs e)
+		private void Button1_Click(object sender, System.EventArgs e)
 		{
 			System.Diagnostics.Debugger.Break();
 		}
 
-		private void RefreshOutputs_Click(object sender, EventArgs e)
+		private void RefreshOutputs_Click(object sender, System.EventArgs e)
 		{
 			this.PopulateDevices();
 		}
 
-		private void DisableAllOutputs_Click(object sender, EventArgs e)
+		private void DisableAllOutputs_Click(object sender, System.EventArgs e)
 		{
 			System.Diagnostics.Debugger.Break();
 		}
@@ -257,38 +274,65 @@ namespace JakesSoundboard
 			System.Diagnostics.Debugger.Break();
 		}
 
-		private void SoundViewClick(object sender, EventArgs e)
+		private void SoundViewClick(object sender, System.EventArgs e)
 		{
-			this.MMI_RemoveSoundItem.Enabled = this.listView1.SelectedItems.Count >= 1;
+			int Count = this.listView1.SelectedItems.Count;
+			bool IsMoreThanOrEqualToOne = Count >= 1;
+			string Text = "Remove sound" + (Count != 1 ? "s" : "");
+
+			this.MMI_RemoveSoundItem.Enabled = IsMoreThanOrEqualToOne;
+			this.CM_RemoveSound.Enabled = IsMoreThanOrEqualToOne;
+			this.MMI_RemoveSoundItem.Text = Text;
+			this.CM_RemoveSound.Text = Text;
+
 		}
 
-		private void SoundViewDoubleClick(object sender, MouseEventArgs e)
+		private void SoundViewDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			ListViewHitTestInfo hit = this.listView1.HitTest(e.Location);
+			System.Windows.Forms.ListViewHitTestInfo hit = this.listView1.HitTest(e.Location);
 
 			if (hit.Item != null)
 			{
-				MessageBox.Show(hit.Item.Text);
 			};
 		}
 
-		private void MMI_AddNewSound(object sender, EventArgs e)
+		private void MMI_AddNewSound(object sender, System.EventArgs e)
 		{
-			var dialog = new OpenFileDialog
+			var dialog = new System.Windows.Forms.OpenFileDialog
 			{
-				Filter = "MP3 files (*.mp3)|*.mp3|Ogg files (*.ogg)|*.ogg|WAVE Files (*.wav)|*.wav",
-				Title = "Select an audio file"
+				Filter = "All Supported Formats (*.mp3;*.ogg;*.wav)|*.mp3;*.ogg;*.wav|MP3 files (*.mp3)|*.mp3|Ogg files (*.ogg)|*.ogg|WAVE Files (*.wav)|*.wav|All files (*.*)|*.*",
+				Title = "Select an audio file",
+				Multiselect = true
 			};
-			if (dialog.ShowDialog() == DialogResult.OK)
-				this.AddSound(dialog.FileName);
+			if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+				this.AddSound(dialog.FileNames);
 		}
 
-		private void MMI_RemoveSound(object sender, EventArgs e)
+		private void MMI_RemoveSound(object sender, System.EventArgs e)
 		{
+			var Confirmation = LucasStuff.Message.Show("Are you sure you want to remove " + (this.listView1.SelectedItems.Count == 1 ? "this sound" : "these sounds") + "? You can re-add them later if you choose to.", "Confirmation", LucasStuff.Message.Buttons.YesNo, LucasStuff.Message.Icon.Information, this);
 
+			if (Confirmation == System.Windows.Forms.DialogResult.Yes)
+			{
+				this.listView1.BeginUpdate();
+				try
+				{
+					foreach (System.Windows.Forms.ListViewItem Item in this.listView1.SelectedItems)
+					{
+						this.UserData.Sounds.Remove(this.UserData.Sounds[Item.Index]);
+						this.listView1.Items[Item.Index].Remove();
+					}
+				}
+				finally
+				{
+					this.listView1.EndUpdate();
+				}
+
+				this.UserData.Save(this.SaveFileLocation);
+			}
 		}
 
-		private void MMI_About(object sender, EventArgs e)
+		private void MMI_About(object sender, System.EventArgs e)
 		{
 			string Title = "About " + this.ProductName + " (ver " + this.ProductVersion + ")";
 			string Message = "Made by Jake Andreøli of Donut Team. Copyright 2017 Donut Team";
@@ -296,9 +340,28 @@ namespace JakesSoundboard
 			LucasStuff.Message.Show(Message, Title, LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Information, this);
 		}
 
-		private void MMI_Exit(object sender, EventArgs e)
+		private void MMI_Exit(object sender, System.EventArgs e)
 		{
 			this.Close();
+		}
+
+		private void CheckBox1_CheckedChanged(object sender, System.EventArgs e)
+		{
+			this.UserData.LoopEnabled = checkBox1.Checked;
+			this.UserData.Save(this.SaveFileLocation);
+		}
+
+		private void MMI_GitHubLink(object sender, System.EventArgs e)
+		{
+			System.Diagnostics.Process.Start("https://github.com/jakeandreoli/JakesUniversalSoundboard");
+		}
+
+		private void ListView1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
+		{
+			if (e.Button == System.Windows.Forms.MouseButtons.Right)
+			{
+				contextMenu1.Show(listView1, e.Location);
+			}
 		}
 	}
 }

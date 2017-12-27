@@ -61,6 +61,7 @@
 			public bool HotKeyControl = false;
 			public bool HotKeyShift = false;
 			public bool HotKeyAlt = false;
+			public System.Windows.Forms.ListViewItem Item;
 
 			public Sound(System.IO.BinaryReader Reader)
 			{

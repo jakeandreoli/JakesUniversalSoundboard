@@ -45,10 +45,14 @@
 			this.menuItem6 = new System.Windows.Forms.MenuItem();
 			this.menuItem7 = new System.Windows.Forms.MenuItem();
 			this.menuItem4 = new System.Windows.Forms.MenuItem();
+			this.menuItem2 = new System.Windows.Forms.MenuItem();
 			this.menuItem5 = new System.Windows.Forms.MenuItem();
 			this.listView1 = new LucasStuff.ExplorerThemedListView();
 			this.LVSoundName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.LVHotKey = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.contextMenu1 = new System.Windows.Forms.ContextMenu();
+			this.menuItem3 = new System.Windows.Forms.MenuItem();
+			this.CM_RemoveSound = new System.Windows.Forms.MenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -58,7 +62,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkedListBox1.FormattingEnabled = true;
-			this.checkedListBox1.Location = new System.Drawing.Point(67, 254);
+			this.checkedListBox1.Location = new System.Drawing.Point(68, 254);
 			this.checkedListBox1.Name = "checkedListBox1";
 			this.checkedListBox1.Size = new System.Drawing.Size(440, 154);
 			this.checkedListBox1.TabIndex = 0;
@@ -69,7 +73,7 @@
 			this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(12, 269);
+			this.label1.Location = new System.Drawing.Point(11, 254);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(47, 13);
 			this.label1.TabIndex = 3;
@@ -78,7 +82,7 @@
 			// DisableAllOutputs
 			// 
 			this.DisableAllOutputs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.DisableAllOutputs.Location = new System.Drawing.Point(383, 414);
+			this.DisableAllOutputs.Location = new System.Drawing.Point(384, 412);
 			this.DisableAllOutputs.Name = "DisableAllOutputs";
 			this.DisableAllOutputs.Size = new System.Drawing.Size(125, 23);
 			this.DisableAllOutputs.TabIndex = 4;
@@ -141,6 +145,7 @@
 			this.checkBox1.TabIndex = 10;
 			this.checkBox1.Text = "Loop";
 			this.checkBox1.UseVisualStyleBackColor = true;
+			this.checkBox1.CheckedChanged += new System.EventHandler(this.CheckBox1_CheckedChanged);
 			// 
 			// mainMenu1
 			// 
@@ -168,7 +173,7 @@
 			// 
 			this.MMI_RemoveSoundItem.Enabled = false;
 			this.MMI_RemoveSoundItem.Index = 1;
-			this.MMI_RemoveSoundItem.Text = "Remove sound...";
+			this.MMI_RemoveSoundItem.Text = "Remove sound";
 			this.MMI_RemoveSoundItem.Click += new System.EventHandler(this.MMI_RemoveSound);
 			// 
 			// menuItem6
@@ -186,12 +191,19 @@
 			// 
 			this.menuItem4.Index = 1;
 			this.menuItem4.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this.menuItem2,
             this.menuItem5});
 			this.menuItem4.Text = "Help";
 			// 
+			// menuItem2
+			// 
+			this.menuItem2.Index = 0;
+			this.menuItem2.Text = "GitHub";
+			this.menuItem2.Click += new System.EventHandler(this.MMI_GitHubLink);
+			// 
 			// menuItem5
 			// 
-			this.menuItem5.Index = 0;
+			this.menuItem5.Index = 1;
 			this.menuItem5.Text = "About";
 			this.menuItem5.Click += new System.EventHandler(this.MMI_About);
 			// 
@@ -204,7 +216,6 @@
             this.LVHotKey});
 			this.listView1.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
 			this.listView1.Location = new System.Drawing.Point(68, 12);
-			this.listView1.MultiSelect = false;
 			this.listView1.Name = "listView1";
 			this.listView1.Size = new System.Drawing.Size(440, 236);
 			this.listView1.TabIndex = 5;
@@ -212,16 +223,36 @@
 			this.listView1.View = System.Windows.Forms.View.Details;
 			this.listView1.SelectedIndexChanged += new System.EventHandler(this.SoundViewClick);
 			this.listView1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.SoundViewDoubleClick);
+			this.listView1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ListView1_MouseUp);
 			// 
 			// LVSoundName
 			// 
 			this.LVSoundName.Text = "Sound name";
-			this.LVSoundName.Width = 302;
+			this.LVSoundName.Width = 283;
 			// 
 			// LVHotKey
 			// 
 			this.LVHotKey.Text = "Hot Key";
 			this.LVHotKey.Width = 134;
+			// 
+			// contextMenu1
+			// 
+			this.contextMenu1.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this.menuItem3,
+            this.CM_RemoveSound});
+			// 
+			// menuItem3
+			// 
+			this.menuItem3.Index = 0;
+			this.menuItem3.Text = "Add sound...";
+			this.menuItem3.Click += new System.EventHandler(this.MMI_AddNewSound);
+			// 
+			// CM_RemoveSound
+			// 
+			this.CM_RemoveSound.Enabled = false;
+			this.CM_RemoveSound.Index = 1;
+			this.CM_RemoveSound.Text = "Remove sound";
+			this.CM_RemoveSound.Click += new System.EventHandler(this.MMI_RemoveSound);
 			// 
 			// Form1
 			// 
@@ -271,6 +302,10 @@
 		private System.Windows.Forms.MenuItem menuItem7;
 		private System.Windows.Forms.MenuItem menuItem4;
 		private System.Windows.Forms.MenuItem menuItem5;
+		private System.Windows.Forms.MenuItem menuItem2;
+		private System.Windows.Forms.ContextMenu contextMenu1;
+		private System.Windows.Forms.MenuItem CM_RemoveSound;
+		private System.Windows.Forms.MenuItem menuItem3;
 	}
 }
 
