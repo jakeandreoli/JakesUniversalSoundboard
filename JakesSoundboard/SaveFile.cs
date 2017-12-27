@@ -9,7 +9,7 @@
 
 	class SaveFile
 	{
-		private const int Version = 1;
+		private const int Version = 2;
 		private const string Signature = "JUSB";
 
 		public static string[] SupportedFormats = { "MP3", "OGG", "WAV" };
@@ -18,6 +18,7 @@
 		public int CurrentVersion = Version;
 
 		public bool LoopEnabled = false;
+		public bool UseFriendlyNames = false;
 
 		public System.Collections.Generic.Dictionary<string, Device> Devices = new System.Collections.Generic.Dictionary<string, Device>();
 		public System.Collections.Generic.List<Sound> Sounds = new System.Collections.Generic.List<Sound>();
@@ -54,6 +55,7 @@
 		public class Sound
 		{
 			public string FilePath;
+			public SoundFormat SndFormat;
 			public bool LoopFriendly = false;
 
 			public bool HasHotKey = false;
@@ -75,6 +77,17 @@
 					this.HotKeyShift = Reader.ReadBoolean();
 					this.HotKeyAlt = Reader.ReadBoolean();
 				}
+
+				string PathExtension = System.IO.Path.GetExtension(this.FilePath).Substring(1);
+
+				if (string.Equals(PathExtension, "MP3", System.StringComparison.OrdinalIgnoreCase))
+					this.SndFormat = SoundFormat.MP3;
+				else if (string.Equals(PathExtension, "OGG", System.StringComparison.OrdinalIgnoreCase))
+					this.SndFormat = SoundFormat.OGG;
+				else if (string.Equals(PathExtension, "WAV", System.StringComparison.OrdinalIgnoreCase))
+					this.SndFormat = SoundFormat.WAV;
+				else
+					throw new System.Exception();
 			}
 
 			public Sound()
@@ -121,6 +134,7 @@
 					Writer.Write(System.Text.Encoding.ASCII.GetBytes(Signature));
 					Writer.Write(Version);
 					Writer.Write(this.LoopEnabled);
+					Writer.Write(this.UseFriendlyNames);
 					Writer.Write(this.Devices.Count);
 					foreach (var Device in this.Devices)
 						Device.Value.Save(Writer);
@@ -155,6 +169,7 @@
 					return false;
 
 				this.LoopEnabled = Reader.ReadBoolean();
+				this.UseFriendlyNames = Reader.ReadBoolean();
 
 				int DeviceCount = Reader.ReadInt32();
 				{

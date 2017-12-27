@@ -82,8 +82,10 @@ namespace JakesSoundboard
 			InitializeComponent();
 		}
 
+
 		public string SaveFileLocation = System.Windows.Forms.Application.StartupPath + System.IO.Path.DirectorySeparatorChar + "Data.jsub";
 		private SaveFile UserData;
+		private System.Text.RegularExpressions.Regex FriendlyNameGenerator = new System.Text.RegularExpressions.Regex("([A-Z][a-z]+|[A-Z]+(?![a-z])) *");
 
 		private void Form1_Load(object sender, System.EventArgs e)
 		{
@@ -94,6 +96,7 @@ namespace JakesSoundboard
 
 			if (SaveDataExists)
 			{
+				// TODO: Fix this (the message shows it's corrupted when it's out of date, we should probably show something else)
 				if (!this.UserData.Load(this.SaveFileLocation))
 				{
 					LucasStuff.Message.Show("Your save file is corrupted. You should probably back that up so we can look into it.", "Oh no!", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Error, this);
@@ -121,6 +124,7 @@ namespace JakesSoundboard
 			this.PopulateDevices();
 			this.PopulateSounds();
 			this.checkBox1.Checked = this.UserData.LoopEnabled;
+			this.ShowFriendlySoundNames.Checked = this.UserData.UseFriendlyNames;
 
 			this.HotKeyManager.Register(System.Windows.Input.Key.F5, System.Windows.Input.ModifierKeys.Control);
 
@@ -173,7 +177,7 @@ namespace JakesSoundboard
 				foreach (var Device in AllDevices)
 				{
 					int Item = this.checkedListBox1.Items.Add(Device);
-
+					
 					// TODO: Implement save file device shit.
 				}
 			}
@@ -183,12 +187,20 @@ namespace JakesSoundboard
 			}
 		}
 
+		private string GetSoundListText(string FilePath)
+		{
+			string Text = System.IO.Path.GetFileNameWithoutExtension(FilePath);
+			if (this.UserData.UseFriendlyNames)
+				return this.FriendlyNameGenerator.Replace(Text, "$1 ").TrimEnd();
+			else
+				return Text;
+		}
+
 		private void AddSoundToList(SaveFile.Sound Snd)
 		{
-
 			System.Windows.Forms.ListViewItem Item = new System.Windows.Forms.ListViewItem
 			{
-				Text = System.IO.Path.GetFileNameWithoutExtension(Snd.FilePath)
+				Text = GetSoundListText(Snd.FilePath)
 			};
 
 			string HotKeyPreview = "";
@@ -209,6 +221,7 @@ namespace JakesSoundboard
 
 			Item.SubItems.Add(HotKeyPreview.Length != 0 ? HotKeyPreview : "(none)");
 
+			Item.Tag = Snd;
 			Snd.Item = Item;
 
 			this.listView1.Items.Add(Item);
@@ -271,7 +284,6 @@ namespace JakesSoundboard
 
 		private void DeviceListChecked(object sender, System.Windows.Forms.ItemCheckEventArgs e)
 		{
-			System.Diagnostics.Debugger.Break();
 		}
 
 		private void SoundViewClick(object sender, System.EventArgs e)
@@ -284,7 +296,6 @@ namespace JakesSoundboard
 			this.CM_RemoveSound.Enabled = IsMoreThanOrEqualToOne;
 			this.MMI_RemoveSoundItem.Text = Text;
 			this.CM_RemoveSound.Text = Text;
-
 		}
 
 		private void SoundViewDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -293,6 +304,25 @@ namespace JakesSoundboard
 
 			if (hit.Item != null)
 			{
+				foreach (int Sometig in this.checkedListBox1.CheckedIndices)
+				{
+					SaveFile.Sound Item = ((SaveFile.Sound)hit.Item.Tag);
+					NAudio.Wave.WaveStream Stream;
+					if (Item.SndFormat == SoundFormat.OGG)
+						Stream = new NAudio.Vorbis.VorbisWaveReader(Item.FilePath);
+					else if (Item.SndFormat == SoundFormat.WAV)
+						Stream = new NAudio.Wave.WaveFileReader(Item.FilePath);
+					else if (Item.SndFormat == SoundFormat.MP3)
+						Stream = new NAudio.Wave.Mp3FileReader(Item.FilePath);
+					else
+						throw new System.NotSupportedException();
+					var waveOut = new NAudio.Wave.WaveOutEvent();
+					{
+						waveOut.DeviceNumber = Sometig;
+						waveOut.Init(Stream);
+						waveOut.Play();
+					}
+				}
 			};
 		}
 
@@ -347,7 +377,7 @@ namespace JakesSoundboard
 
 		private void CheckBox1_CheckedChanged(object sender, System.EventArgs e)
 		{
-			this.UserData.LoopEnabled = checkBox1.Checked;
+			this.UserData.LoopEnabled = this.checkBox1.Checked;
 			this.UserData.Save(this.SaveFileLocation);
 		}
 
@@ -360,8 +390,35 @@ namespace JakesSoundboard
 		{
 			if (e.Button == System.Windows.Forms.MouseButtons.Right)
 			{
-				contextMenu1.Show(listView1, e.Location);
+				this.contextMenu1.Show(this.listView1, e.Location);
 			}
+		}
+
+
+		private void ShowFriendlySoundNamesClick(object sender, System.EventArgs e)
+		{
+			this.UserData.UseFriendlyNames = this.ShowFriendlySoundNames.Checked = !this.ShowFriendlySoundNames.Checked;
+			if (this.UserData.UseFriendlyNames)
+			{
+				var Confirmation = LucasStuff.Message.Show("This setting will attempt to split file names into human readable sentences. For example \"ThisIsFUN\" will become \"This Is FUN\". It will most likely not work in every circumstance. Are you sure you want to enable this?", "Confirmation", LucasStuff.Message.Buttons.YesNo, LucasStuff.Message.Icon.Information, this);
+
+				if (Confirmation == System.Windows.Forms.DialogResult.No)
+				{
+					this.ShowFriendlySoundNames.Checked = false;
+					this.UserData.UseFriendlyNames = false;
+					return;
+				}
+			}
+
+			this.listView1.BeginUpdate();
+
+			foreach (System.Windows.Forms.ListViewItem Item in this.listView1.Items)
+			{
+				Item.Text = this.GetSoundListText(((SaveFile.Sound)Item.Tag).FilePath);
+			}
+
+			this.listView1.EndUpdate();
+			this.UserData.Save(this.SaveFileLocation);
 		}
 	}
 }

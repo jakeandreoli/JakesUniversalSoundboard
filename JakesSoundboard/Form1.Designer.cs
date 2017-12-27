@@ -44,15 +44,17 @@
 			this.MMI_RemoveSoundItem = new System.Windows.Forms.MenuItem();
 			this.menuItem6 = new System.Windows.Forms.MenuItem();
 			this.menuItem7 = new System.Windows.Forms.MenuItem();
+			this.menuItem8 = new System.Windows.Forms.MenuItem();
+			this.ShowFriendlySoundNames = new System.Windows.Forms.MenuItem();
 			this.menuItem4 = new System.Windows.Forms.MenuItem();
 			this.menuItem2 = new System.Windows.Forms.MenuItem();
 			this.menuItem5 = new System.Windows.Forms.MenuItem();
-			this.listView1 = new LucasStuff.ExplorerThemedListView();
-			this.LVSoundName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.LVHotKey = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.contextMenu1 = new System.Windows.Forms.ContextMenu();
 			this.menuItem3 = new System.Windows.Forms.MenuItem();
 			this.CM_RemoveSound = new System.Windows.Forms.MenuItem();
+			this.listView1 = new LucasStuff.ExplorerThemedListView();
+			this.LVSoundName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.LVHotKey = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -151,6 +153,7 @@
 			// 
 			this.mainMenu1.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.menuItem1,
+            this.menuItem8,
             this.menuItem4});
 			// 
 			// menuItem1
@@ -187,9 +190,22 @@
 			this.menuItem7.Text = "Exit";
 			this.menuItem7.Click += new System.EventHandler(this.MMI_Exit);
 			// 
+			// menuItem8
+			// 
+			this.menuItem8.Index = 1;
+			this.menuItem8.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this.ShowFriendlySoundNames});
+			this.menuItem8.Text = "View";
+			// 
+			// ShowFriendlySoundNames
+			// 
+			this.ShowFriendlySoundNames.Index = 0;
+			this.ShowFriendlySoundNames.Text = "Show friendly sound names";
+			this.ShowFriendlySoundNames.Click += new System.EventHandler(this.ShowFriendlySoundNamesClick);
+			// 
 			// menuItem4
 			// 
-			this.menuItem4.Index = 1;
+			this.menuItem4.Index = 2;
 			this.menuItem4.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.menuItem2,
             this.menuItem5});
@@ -206,6 +222,25 @@
 			this.menuItem5.Index = 1;
 			this.menuItem5.Text = "About";
 			this.menuItem5.Click += new System.EventHandler(this.MMI_About);
+			// 
+			// contextMenu1
+			// 
+			this.contextMenu1.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this.menuItem3,
+            this.CM_RemoveSound});
+			// 
+			// menuItem3
+			// 
+			this.menuItem3.Index = 0;
+			this.menuItem3.Text = "Add sound...";
+			this.menuItem3.Click += new System.EventHandler(this.MMI_AddNewSound);
+			// 
+			// CM_RemoveSound
+			// 
+			this.CM_RemoveSound.Enabled = false;
+			this.CM_RemoveSound.Index = 1;
+			this.CM_RemoveSound.Text = "Remove sound";
+			this.CM_RemoveSound.Click += new System.EventHandler(this.MMI_RemoveSound);
 			// 
 			// listView1
 			// 
@@ -234,25 +269,6 @@
 			// 
 			this.LVHotKey.Text = "Hot Key";
 			this.LVHotKey.Width = 134;
-			// 
-			// contextMenu1
-			// 
-			this.contextMenu1.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
-            this.menuItem3,
-            this.CM_RemoveSound});
-			// 
-			// menuItem3
-			// 
-			this.menuItem3.Index = 0;
-			this.menuItem3.Text = "Add sound...";
-			this.menuItem3.Click += new System.EventHandler(this.MMI_AddNewSound);
-			// 
-			// CM_RemoveSound
-			// 
-			this.CM_RemoveSound.Enabled = false;
-			this.CM_RemoveSound.Index = 1;
-			this.CM_RemoveSound.Text = "Remove sound";
-			this.CM_RemoveSound.Click += new System.EventHandler(this.MMI_RemoveSound);
 			// 
 			// Form1
 			// 
@@ -306,6 +322,8 @@
 		private System.Windows.Forms.ContextMenu contextMenu1;
 		private System.Windows.Forms.MenuItem CM_RemoveSound;
 		private System.Windows.Forms.MenuItem menuItem3;
+		private System.Windows.Forms.MenuItem menuItem8;
+		private System.Windows.Forms.MenuItem ShowFriendlySoundNames;
 	}
 }
 
