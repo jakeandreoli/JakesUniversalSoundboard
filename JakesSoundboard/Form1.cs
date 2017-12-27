@@ -335,7 +335,7 @@ namespace JakesSoundboard
 		private void MMI_About(object sender, System.EventArgs e)
 		{
 			string Title = "About " + this.ProductName + " (ver " + this.ProductVersion + ")";
-			string Message = "Made by Jake Andreøli of Donut Team. Copyright 2017 Donut Team";
+			string Message = "Made by Jake Andreøli.";
 
 			LucasStuff.Message.Show(Message, Title, LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Information, this);
 		}
