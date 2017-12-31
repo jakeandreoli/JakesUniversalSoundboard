@@ -308,11 +308,6 @@ namespace JakesSoundboard
 			this.UserData.Save(this.SaveFileLocation);
 		}
 
-		private void HotKeyManagerHandler(object sender, KeyPressedEventArgs e)
-		{
-			throw new System.NotImplementedException();
-		}
-
 		private void Button1_Click(object sender, System.EventArgs e)
 		{
 			System.Diagnostics.Debugger.Break();
