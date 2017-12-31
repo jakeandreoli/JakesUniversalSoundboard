@@ -86,6 +86,7 @@ namespace JakesSoundboard
 		public string SaveFileLocation = System.Windows.Forms.Application.StartupPath + System.IO.Path.DirectorySeparatorChar + "Data.jsub";
 		private SaveFile UserData;
 		private System.Text.RegularExpressions.Regex FriendlyNameGenerator = new System.Text.RegularExpressions.Regex("([A-Z][a-z]+|[A-Z]+(?![a-z])) *");
+		private System.Collections.Generic.List<NAudio.Wave.WaveOutEvent> CurrentlyPlaying = new System.Collections.Generic.List<NAudio.Wave.WaveOutEvent>();
 
 		private void Form1_Load(object sender, System.EventArgs e)
 		{
@@ -273,7 +274,7 @@ namespace JakesSoundboard
 		private void AddSound(string[] Path2)
 		{
 			this.listView1.SelectedItems.Clear();
-
+			System.Collections.Generic.List<string> Errors = new System.Collections.Generic.List<string>();
 			foreach (string Path in Path2)
 			{
 				if (System.IO.Directory.Exists(Path))
@@ -286,8 +287,7 @@ namespace JakesSoundboard
 
 				if (!SaveFile.SupportedFormats.Contains(PathExtension))
 				{
-					LucasStuff.Message.Show(Path + " is not a valid music file.", "File format not supported.", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
-
+					Errors.Add(Path);
 					continue;
 				}
 
@@ -305,6 +305,16 @@ namespace JakesSoundboard
 				SkipSound:;
 
 			}
+
+			if (Errors.Count != 0)
+			{
+				string Output = "The following files were not added:\n";
+				foreach (string Error in Errors)
+					Output += "\n" + Error;
+
+				LucasStuff.Message.Show(Output, "File format not supported.", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
+			}
+
 			this.UserData.Save(this.SaveFileLocation);
 		}
 
@@ -350,12 +360,14 @@ namespace JakesSoundboard
 							else
 								throw new System.NotSupportedException();
 
-							var waveOut = new NAudio.Wave.WaveOutEvent();
+							NAudio.Wave.WaveOutEvent waveOut = new NAudio.Wave.WaveOutEvent();
+							this.CurrentlyPlaying.Add(waveOut);
 							{
 								waveOut.DeviceNumber = (int)(((SaveFile.Device)DeviceNode.Tag).CurrentDevice);
 								waveOut.Init(Stream);
 								waveOut.Play();
 							}
+							waveOut.PlaybackStopped += this.WaveOut_PlaybackStopped;
 						}
 						catch (System.FormatException Ex)
 						{
@@ -365,6 +377,11 @@ namespace JakesSoundboard
 					}
 				}
 			};
+		}
+
+		private void WaveOut_PlaybackStopped(object sender, NAudio.Wave.StoppedEventArgs e)
+		{
+			this.CurrentlyPlaying.Remove((NAudio.Wave.WaveOutEvent)sender);
 		}
 
 		private void MMI_AddNewSound(object sender, System.EventArgs e)
@@ -463,6 +480,14 @@ namespace JakesSoundboard
 				{
 					Item.Selected = true;
 				}
+			}
+		}
+
+		private void button1_Click_1(object sender, System.EventArgs e)
+		{
+			foreach (NAudio.Wave.WaveOutEvent Playing in this.CurrentlyPlaying)
+			{
+				Playing.Stop();
 			}
 		}
 	}
