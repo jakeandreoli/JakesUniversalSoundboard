@@ -4,7 +4,8 @@
 	{
 		MP3,
 		OGG,
-		WAV
+		WAV,
+		AIFF
 	};
 
 	class SaveFile
@@ -12,7 +13,7 @@
 		private const int Version = 2;
 		private const string Signature = "JUSB";
 
-		public static string[] SupportedFormats = { "MP3", "OGG", "WAV" };
+		public static string[] SupportedFormats = { "MP3", "OGG", "WAV", "AIFF", "AIF", "AIFC", "WAVE" };
 
 		public string CurrentSignature = Signature;
 		public int CurrentVersion = Version;
@@ -25,8 +26,9 @@
 
 		public class Device
 		{
+			public int? CurrentDevice = null;
 			public string DeviceID;
-			public string DeviceFriendlyName;
+			public string DeviceFriendlyName = "Unknown Device";
 			public bool Enabled = false;
 			public float Volume = 1.0f;
 
@@ -78,21 +80,30 @@
 					this.HotKeyAlt = Reader.ReadBoolean();
 				}
 
+				this.SetFileFormat();
+			}
+
+			public Sound(string Path)
+			{
+				this.FilePath = Path;
+
+				this.SetFileFormat();
+			}
+
+			public void SetFileFormat()
+			{
 				string PathExtension = System.IO.Path.GetExtension(this.FilePath).Substring(1);
 
 				if (string.Equals(PathExtension, "MP3", System.StringComparison.OrdinalIgnoreCase))
 					this.SndFormat = SoundFormat.MP3;
 				else if (string.Equals(PathExtension, "OGG", System.StringComparison.OrdinalIgnoreCase))
 					this.SndFormat = SoundFormat.OGG;
-				else if (string.Equals(PathExtension, "WAV", System.StringComparison.OrdinalIgnoreCase))
+				else if (string.Equals(PathExtension, "WAV", System.StringComparison.OrdinalIgnoreCase) || string.Equals(PathExtension, "WAVE", System.StringComparison.OrdinalIgnoreCase))
 					this.SndFormat = SoundFormat.WAV;
+				else if (string.Equals(PathExtension, "AIFF", System.StringComparison.OrdinalIgnoreCase) || string.Equals(PathExtension, "AIF", System.StringComparison.OrdinalIgnoreCase))
+					this.SndFormat = SoundFormat.AIFF;
 				else
 					throw new System.Exception();
-			}
-
-			public Sound()
-			{
-
 			}
 
 			public void Save(System.IO.BinaryWriter Writer)
@@ -113,11 +124,7 @@
 
 		public Sound AddSound(string Path)
 		{
-			Sound NewSound = new Sound
-			{
-				FilePath = Path
-			};
-
+			Sound NewSound = new Sound(Path);
 			this.Sounds.Add(NewSound);
 
 			return NewSound;

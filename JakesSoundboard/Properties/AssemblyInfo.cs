@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Jake's Universal Soundboard")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Play any sound you want to any device you have.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Donut Team")]
 [assembly: AssemblyProduct("Jake's Universal Soundboard")]

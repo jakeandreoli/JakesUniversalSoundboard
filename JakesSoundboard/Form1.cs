@@ -1,12 +1,12 @@
 ﻿using System.Linq;
-using GlobalHotKey;
 
 namespace JakesSoundboard
 {
 	public partial class Form1 : System.Windows.Forms.Form
 	{
-		// Initialisation
+		#region Drag and drop support
 		private IDropTargetHelper DropTargetHelper;
+
 		void Form_DragEnter(object sender, System.Windows.Forms.DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(System.Windows.Forms.DataFormats.FileDrop))
@@ -74,9 +74,9 @@ namespace JakesSoundboard
 				catch (System.Exception) { }
 			}
 		}
+		#endregion
 
-		public GlobalHotKey.HotKeyManager HotKeyManager = new GlobalHotKey.HotKeyManager();
-
+		#region Form Initisalisation
 		public Form1()
 		{
 			InitializeComponent();
@@ -121,33 +121,89 @@ namespace JakesSoundboard
 			this.DragLeave += new System.EventHandler(this.Form_DragLeave);
 			this.DragOver += new System.Windows.Forms.DragEventHandler(this.Form_DragOver);
 
+			this.LoadDevices();
 			this.PopulateDevices();
 			this.PopulateSounds();
-			this.checkBox1.Checked = this.UserData.LoopEnabled;
 			this.ShowFriendlySoundNames.Checked = this.UserData.UseFriendlyNames;
-
-			this.HotKeyManager.Register(System.Windows.Input.Key.F5, System.Windows.Input.ModifierKeys.Control);
-
-			this.HotKeyManager.KeyPressed += this.HotKeyManagerHandler;
 		}
+		#endregion
 
-		//
+		#region Click Events
+		private void CE_DisableAllSounds(object sender, System.EventArgs e) => this.DisableAllSounds();
+		private void CE_DeleteSounds(object sender, System.EventArgs e) => this.DeleteSounds();
+		private void CE_PopulateSounds(object sender, System.EventArgs e) => this.PopulateDevices();
+		private void CE_CloseProgram(object sender, System.EventArgs e) => this.Close();
+		private void CE_AboutWindow(object sender, System.EventArgs e) => this.CreateAboutWindow();
+		#endregion
 
-		public void DisposeWave()
+		#region Handle Other Windows
+		private void CreateAboutWindow()
 		{
-			throw new System.NotImplementedException();
+			Forms.About AboutWindow = new Forms.About();
+			AboutWindow.Show();
+		}
+		#endregion
+
+		#region Device Specific Code
+		private void LoadDevices()
+		{
+
+			for (int i = 0; i < NAudio.Wave.WaveOut.DeviceCount; i++)
+			{
+				NAudio.Wave.WaveOutCapabilities WOC = NAudio.Wave.WaveOut.GetCapabilities(i);
+
+				string Key = WOC.ProductGuid.ToString() + WOC.ProductName;
+
+				if (this.UserData.Devices.ContainsKey(Key))
+				{
+					this.UserData.Devices[Key].CurrentDevice = i;
+					this.UserData.Devices[Key].DeviceFriendlyName = WOC.ProductName;
+				}
+				else
+				{
+					SaveFile.Device NewDevice = new SaveFile.Device
+					{
+						DeviceID = Key,
+						CurrentDevice = i,
+						DeviceFriendlyName = WOC.ProductName
+					};
+					this.UserData.Devices.Add(Key, NewDevice);
+				}
+			}
+			this.UserData.Save(this.SaveFileLocation);
 		}
 
-		public void PlaySound(string FileName, int DeviceNumber)
+		public void PopulateDevices()
 		{
-			//disposeWave();// stop previous sounds before starting
-			//waveReader = new NAudio.Wave.WaveFileReader(fileName);
-			//var waveOut = new NAudio.Wave.WaveOut();
-			//waveOut.DeviceNumber = deviceNumber;
-			//output = waveOut;
-			//output.Init(waveReader);
-			//output.Play();
+			this.treeView1.BeginUpdate();
+
+			this.treeView1.Nodes.Clear();
+
+			try
+			{
+				foreach (SaveFile.Device Device in this.UserData.Devices.Values)
+				{
+					System.Windows.Forms.TreeNode Item;
+
+					Item = this.treeView1.Nodes.Add(Device.DeviceID, Device.DeviceFriendlyName);
+
+					if (Device.CurrentDevice == null)
+						Item.BackColor = System.Drawing.Color.LightPink;
+					Item.Tag = Device;
+					Item.Checked = Device.Enabled;
+				}
+			}
+			finally
+			{
+				this.treeView1.EndUpdate();
+			}
 		}
+		#endregion
+
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
+		public static extern bool RegisterHotKey(System.IntPtr hWnd, int id, int fsModifiers, int vlc);
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
+		public static extern bool UnregisterHotKey(System.IntPtr hWnd, int id);
 
 		private void PopulateSounds()
 		{
@@ -164,28 +220,7 @@ namespace JakesSoundboard
 			}
 		}
 
-		private void PopulateDevices()
-		{
-			this.checkedListBox1.BeginUpdate();
-			try
-			{
-				this.checkedListBox1.Items.Clear();
 
-				NAudio.CoreAudioApi.MMDeviceEnumerator DeviceNames = new NAudio.CoreAudioApi.MMDeviceEnumerator();
-				NAudio.CoreAudioApi.MMDeviceCollection AllDevices = DeviceNames.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active);
-
-				foreach (var Device in AllDevices)
-				{
-					int Item = this.checkedListBox1.Items.Add(Device);
-					
-					// TODO: Implement save file device shit.
-				}
-			}
-			finally
-			{
-				this.checkedListBox1.EndUpdate();
-			}
-		}
 
 		private string GetSoundListText(string FilePath)
 		{
@@ -227,37 +262,48 @@ namespace JakesSoundboard
 			this.listView1.Items.Add(Item);
 		}
 
+		private void DisableAllSounds()
+		{
+			foreach (System.Windows.Forms.TreeNode DeviceNode in this.treeView1.Nodes)
+			{
+				DeviceNode.Checked = false;
+			}
+		}
+
 		private void AddSound(string[] Path2)
 		{
+			this.listView1.SelectedItems.Clear();
+
 			foreach (string Path in Path2)
 			{
 				if (System.IO.Directory.Exists(Path))
 				{
-					LucasStuff.Message.Show("Folders are not supported.", "No Support", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
-
-					return;
+					this.AddSound(System.IO.Directory.GetFileSystemEntries(Path));
+					continue;
 				}
 
 				string PathExtension = System.IO.Path.GetExtension(Path).ToUpperInvariant().Substring(1);
 
 				if (!SaveFile.SupportedFormats.Contains(PathExtension))
 				{
-					LucasStuff.Message.Show("File format not supported. " + PathExtension + " is not a valid music file.", "No Support", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
+					LucasStuff.Message.Show(Path + " is not a valid music file.", "File format not supported.", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Warning, this);
 
-					return;
+					continue;
 				}
 
 				foreach (SaveFile.Sound Snd in this.UserData.Sounds)
 				{
 					if (Snd.FilePath == Path)
 					{
-						this.listView1.SelectedItems.Clear();
 						Snd.Item.Selected = true;
-						return;
+						goto SkipSound;
 					}
 				}
 
 				this.AddSoundToList(this.UserData.AddSound(Path));
+
+				SkipSound:;
+
 			}
 			this.UserData.Save(this.SaveFileLocation);
 		}
@@ -270,20 +316,6 @@ namespace JakesSoundboard
 		private void Button1_Click(object sender, System.EventArgs e)
 		{
 			System.Diagnostics.Debugger.Break();
-		}
-
-		private void RefreshOutputs_Click(object sender, System.EventArgs e)
-		{
-			this.PopulateDevices();
-		}
-
-		private void DisableAllOutputs_Click(object sender, System.EventArgs e)
-		{
-			System.Diagnostics.Debugger.Break();
-		}
-
-		private void DeviceListChecked(object sender, System.Windows.Forms.ItemCheckEventArgs e)
-		{
 		}
 
 		private void SoundViewClick(object sender, System.EventArgs e)
@@ -304,23 +336,37 @@ namespace JakesSoundboard
 
 			if (hit.Item != null)
 			{
-				foreach (int Sometig in this.checkedListBox1.CheckedIndices)
+				foreach (System.Windows.Forms.TreeNode DeviceNode in this.treeView1.Nodes)
 				{
-					SaveFile.Sound Item = ((SaveFile.Sound)hit.Item.Tag);
-					NAudio.Wave.WaveStream Stream;
-					if (Item.SndFormat == SoundFormat.OGG)
-						Stream = new NAudio.Vorbis.VorbisWaveReader(Item.FilePath);
-					else if (Item.SndFormat == SoundFormat.WAV)
-						Stream = new NAudio.Wave.WaveFileReader(Item.FilePath);
-					else if (Item.SndFormat == SoundFormat.MP3)
-						Stream = new NAudio.Wave.Mp3FileReader(Item.FilePath);
-					else
-						throw new System.NotSupportedException();
-					var waveOut = new NAudio.Wave.WaveOutEvent();
+					if (DeviceNode.Checked && DeviceNode.Tag != null && ((SaveFile.Device)DeviceNode.Tag).CurrentDevice != null)
 					{
-						waveOut.DeviceNumber = Sometig;
-						waveOut.Init(Stream);
-						waveOut.Play();
+						try
+						{
+							SaveFile.Sound Item = ((SaveFile.Sound)hit.Item.Tag);
+							NAudio.Wave.WaveStream Stream;
+							if (Item.SndFormat == SoundFormat.OGG)
+								Stream = new NAudio.Vorbis.VorbisWaveReader(Item.FilePath);
+							else if (Item.SndFormat == SoundFormat.WAV)
+								Stream = new NAudio.Wave.WaveFileReader(Item.FilePath);
+							else if (Item.SndFormat == SoundFormat.MP3)
+								Stream = new NAudio.Wave.Mp3FileReader(Item.FilePath);
+							else if (Item.SndFormat == SoundFormat.AIFF)
+								Stream = new NAudio.Wave.AiffFileReader(Item.FilePath);
+							else
+								throw new System.NotSupportedException();
+
+							var waveOut = new NAudio.Wave.WaveOutEvent();
+							{
+								waveOut.DeviceNumber = (int)(((SaveFile.Device)DeviceNode.Tag).CurrentDevice);
+								waveOut.Init(Stream);
+								waveOut.Play();
+							}
+						}
+						catch (System.FormatException Ex)
+						{
+							LucasStuff.Message.Show(Ex.Message, "An error occured while playing", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Error);
+							break;
+						}
 					}
 				}
 			};
@@ -338,8 +384,11 @@ namespace JakesSoundboard
 				this.AddSound(dialog.FileNames);
 		}
 
-		private void MMI_RemoveSound(object sender, System.EventArgs e)
+		public void DeleteSounds()
 		{
+			if (this.listView1.SelectedItems.Count <= 0)
+				return;
+
 			var Confirmation = LucasStuff.Message.Show("Are you sure you want to remove " + (this.listView1.SelectedItems.Count == 1 ? "this sound" : "these sounds") + "? You can re-add them later if you choose to.", "Confirmation", LucasStuff.Message.Buttons.YesNo, LucasStuff.Message.Icon.Information, this);
 
 			if (Confirmation == System.Windows.Forms.DialogResult.Yes)
@@ -362,22 +411,8 @@ namespace JakesSoundboard
 			}
 		}
 
-		private void MMI_About(object sender, System.EventArgs e)
-		{
-			string Title = "About " + this.ProductName + " (ver " + this.ProductVersion + ")";
-			string Message = "Made by Jake Andreøli.";
-
-			LucasStuff.Message.Show(Message, Title, LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Information, this);
-		}
-
-		private void MMI_Exit(object sender, System.EventArgs e)
-		{
-			this.Close();
-		}
-
 		private void CheckBox1_CheckedChanged(object sender, System.EventArgs e)
 		{
-			this.UserData.LoopEnabled = this.checkBox1.Checked;
 			this.UserData.Save(this.SaveFileLocation);
 		}
 
@@ -419,6 +454,21 @@ namespace JakesSoundboard
 
 			this.listView1.EndUpdate();
 			this.UserData.Save(this.SaveFileLocation);
+		}
+
+		private void SoundListKeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
+		{
+			if (e.KeyCode == System.Windows.Forms.Keys.Delete)
+			{
+				this.DeleteSounds();
+			}
+			if (e.Control && e.KeyCode == System.Windows.Forms.Keys.A)
+			{
+				foreach (System.Windows.Forms.ListViewItem Item in this.listView1.Items)
+				{
+					Item.Selected = true;
+				}
+			}
 		}
 	}
 }
