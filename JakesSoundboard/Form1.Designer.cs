@@ -41,8 +41,9 @@
 			this.menuItem7 = new System.Windows.Forms.MenuItem();
 			this.menuItem8 = new System.Windows.Forms.MenuItem();
 			this.ShowFriendlySoundNames = new System.Windows.Forms.MenuItem();
-			this.menuItem13 = new System.Windows.Forms.MenuItem();
+			this.LoopPlaybackMenuItem = new System.Windows.Forms.MenuItem();
 			this.menuItem14 = new System.Windows.Forms.MenuItem();
+			this.menuItem15 = new System.Windows.Forms.MenuItem();
 			this.menuItem4 = new System.Windows.Forms.MenuItem();
 			this.menuItem12 = new System.Windows.Forms.MenuItem();
 			this.menuItem2 = new System.Windows.Forms.MenuItem();
@@ -51,16 +52,19 @@
 			this.menuItem3 = new System.Windows.Forms.MenuItem();
 			this.CM_RemoveSound = new System.Windows.Forms.MenuItem();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-			this.button1 = new System.Windows.Forms.Button();
-			this.listView1 = new LucasStuff.ExplorerThemedListView();
-			this.LVSoundName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.LVHotKey = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
-			this.treeView1 = new LucasStuff.ExplorerThemedTreeView();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
 			this.trackBar1 = new System.Windows.Forms.TrackBar();
 			this.tabPage3 = new System.Windows.Forms.TabPage();
+			this.listView1 = new LucasStuff.ExplorerThemedListView();
+			this.LVSoundName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.LVHotKey = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.treeView1 = new LucasStuff.ExplorerThemedTreeView();
+			this.PlayQueueList = new LucasStuff.ExplorerThemedListView();
+			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -69,6 +73,7 @@
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
+			this.tabPage3.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// mainMenu1
@@ -76,6 +81,7 @@
 			this.mainMenu1.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.menuItem1,
             this.menuItem8,
+            this.menuItem15,
             this.menuItem4});
 			// 
 			// menuItem1
@@ -137,7 +143,7 @@
 			this.menuItem8.Index = 1;
 			this.menuItem8.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.ShowFriendlySoundNames,
-            this.menuItem13,
+            this.LoopPlaybackMenuItem,
             this.menuItem14});
 			this.menuItem8.Text = "Options";
 			// 
@@ -147,10 +153,11 @@
 			this.ShowFriendlySoundNames.Text = "Show friendly sound names";
 			this.ShowFriendlySoundNames.Click += new System.EventHandler(this.ShowFriendlySoundNamesClick);
 			// 
-			// menuItem13
+			// LoopPlaybackMenuItem
 			// 
-			this.menuItem13.Index = 1;
-			this.menuItem13.Text = "Loop playback";
+			this.LoopPlaybackMenuItem.Index = 1;
+			this.LoopPlaybackMenuItem.Text = "Loop playback";
+			this.LoopPlaybackMenuItem.Click += new System.EventHandler(this.CE_LoopPlayback);
 			// 
 			// menuItem14
 			// 
@@ -158,9 +165,15 @@
 			this.menuItem14.Index = 2;
 			this.menuItem14.Text = "Allow overlapping audio";
 			// 
+			// menuItem15
+			// 
+			this.menuItem15.Index = 2;
+			this.menuItem15.Text = "&Stop Sound";
+			this.menuItem15.Click += new System.EventHandler(this.CE_StopPlayback);
+			// 
 			// menuItem4
 			// 
-			this.menuItem4.Index = 2;
+			this.menuItem4.Index = 3;
 			this.menuItem4.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.menuItem12,
             this.menuItem2,
@@ -218,21 +231,65 @@
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.tabControl1);
-			this.splitContainer1.Panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.splitContainer1_Panel2_Paint);
-			this.splitContainer1.Size = new System.Drawing.Size(519, 499);
-			this.splitContainer1.SplitterDistance = 336;
+			this.splitContainer1.Size = new System.Drawing.Size(519, 461);
+			this.splitContainer1.SplitterDistance = 310;
 			this.splitContainer1.TabIndex = 17;
 			// 
-			// button1
+			// tabControl1
 			// 
-			this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.button1.Location = new System.Drawing.Point(418, 102);
-			this.button1.Name = "button1";
-			this.button1.Size = new System.Drawing.Size(85, 23);
-			this.button1.TabIndex = 13;
-			this.button1.Text = "&Stop Sound";
-			this.button1.UseVisualStyleBackColor = true;
-			this.button1.Click += new System.EventHandler(this.StopPlayingButton);
+			this.tabControl1.Controls.Add(this.tabPage1);
+			this.tabControl1.Controls.Add(this.tabPage2);
+			this.tabControl1.Controls.Add(this.tabPage3);
+			this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.tabControl1.Location = new System.Drawing.Point(0, 0);
+			this.tabControl1.Name = "tabControl1";
+			this.tabControl1.SelectedIndex = 0;
+			this.tabControl1.Size = new System.Drawing.Size(519, 147);
+			this.tabControl1.TabIndex = 16;
+			// 
+			// tabPage1
+			// 
+			this.tabPage1.Controls.Add(this.treeView1);
+			this.tabPage1.Location = new System.Drawing.Point(4, 22);
+			this.tabPage1.Name = "tabPage1";
+			this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+			this.tabPage1.Size = new System.Drawing.Size(511, 121);
+			this.tabPage1.TabIndex = 0;
+			this.tabPage1.Text = "Devices";
+			this.tabPage1.UseVisualStyleBackColor = true;
+			// 
+			// tabPage2
+			// 
+			this.tabPage2.Controls.Add(this.PlayQueueList);
+			this.tabPage2.Location = new System.Drawing.Point(4, 22);
+			this.tabPage2.Name = "tabPage2";
+			this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+			this.tabPage2.Size = new System.Drawing.Size(511, 121);
+			this.tabPage2.TabIndex = 1;
+			this.tabPage2.Text = "Play Queue";
+			this.tabPage2.UseVisualStyleBackColor = true;
+			// 
+			// trackBar1
+			// 
+			this.trackBar1.Enabled = false;
+			this.trackBar1.Location = new System.Drawing.Point(8, 6);
+			this.trackBar1.Maximum = 100;
+			this.trackBar1.Name = "trackBar1";
+			this.trackBar1.Size = new System.Drawing.Size(236, 45);
+			this.trackBar1.TabIndex = 15;
+			this.trackBar1.TickFrequency = 10;
+			this.trackBar1.Value = 100;
+			// 
+			// tabPage3
+			// 
+			this.tabPage3.Controls.Add(this.trackBar1);
+			this.tabPage3.Location = new System.Drawing.Point(4, 22);
+			this.tabPage3.Name = "tabPage3";
+			this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+			this.tabPage3.Size = new System.Drawing.Size(511, 121);
+			this.tabPage3.TabIndex = 2;
+			this.tabPage3.Text = "Settings";
+			this.tabPage3.UseVisualStyleBackColor = true;
 			// 
 			// listView1
 			// 
@@ -244,7 +301,7 @@
 			this.listView1.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
 			this.listView1.Location = new System.Drawing.Point(0, 0);
 			this.listView1.Name = "listView1";
-			this.listView1.Size = new System.Drawing.Size(519, 336);
+			this.listView1.Size = new System.Drawing.Size(519, 310);
 			this.listView1.TabIndex = 5;
 			this.listView1.UseCompatibleStateImageBehavior = false;
 			this.listView1.View = System.Windows.Forms.View.Details;
@@ -263,30 +320,6 @@
 			this.LVHotKey.Text = "Hot Key";
 			this.LVHotKey.Width = 103;
 			// 
-			// tabControl1
-			// 
-			this.tabControl1.Controls.Add(this.tabPage1);
-			this.tabControl1.Controls.Add(this.tabPage2);
-			this.tabControl1.Controls.Add(this.tabPage3);
-			this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.tabControl1.Location = new System.Drawing.Point(0, 0);
-			this.tabControl1.Name = "tabControl1";
-			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(519, 159);
-			this.tabControl1.TabIndex = 16;
-			// 
-			// tabPage1
-			// 
-			this.tabPage1.Controls.Add(this.button1);
-			this.tabPage1.Controls.Add(this.treeView1);
-			this.tabPage1.Location = new System.Drawing.Point(4, 22);
-			this.tabPage1.Name = "tabPage1";
-			this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage1.Size = new System.Drawing.Size(511, 133);
-			this.tabPage1.TabIndex = 0;
-			this.tabPage1.Text = "Devices";
-			this.tabPage1.UseVisualStyleBackColor = true;
-			// 
 			// treeView1
 			// 
 			this.treeView1.CheckBoxes = true;
@@ -297,48 +330,45 @@
 			this.treeView1.Name = "treeView1";
 			this.treeView1.ShowLines = false;
 			this.treeView1.ShowRootLines = false;
-			this.treeView1.Size = new System.Drawing.Size(505, 127);
+			this.treeView1.Size = new System.Drawing.Size(505, 115);
 			this.treeView1.TabIndex = 11;
-			this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
-			this.treeView1.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.DeviceListDoubleClick);
+			this.treeView1.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.CE_DeviceListDoubleClick);
 			// 
-			// tabPage2
+			// PlayQueueList
 			// 
-			this.tabPage2.Controls.Add(this.trackBar1);
-			this.tabPage2.Location = new System.Drawing.Point(4, 22);
-			this.tabPage2.Name = "tabPage2";
-			this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage2.Size = new System.Drawing.Size(511, 139);
-			this.tabPage2.TabIndex = 1;
-			this.tabPage2.Text = "Play Queue";
-			this.tabPage2.UseVisualStyleBackColor = true;
+			this.PlayQueueList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+			this.PlayQueueList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3});
+			this.PlayQueueList.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.PlayQueueList.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+			this.PlayQueueList.Location = new System.Drawing.Point(3, 3);
+			this.PlayQueueList.Name = "PlayQueueList";
+			this.PlayQueueList.Size = new System.Drawing.Size(505, 115);
+			this.PlayQueueList.TabIndex = 6;
+			this.PlayQueueList.UseCompatibleStateImageBehavior = false;
+			this.PlayQueueList.View = System.Windows.Forms.View.Details;
 			// 
-			// trackBar1
+			// columnHeader1
 			// 
-			this.trackBar1.Enabled = false;
-			this.trackBar1.Location = new System.Drawing.Point(41, 55);
-			this.trackBar1.Maximum = 100;
-			this.trackBar1.Name = "trackBar1";
-			this.trackBar1.Size = new System.Drawing.Size(182, 45);
-			this.trackBar1.TabIndex = 15;
-			this.trackBar1.TickFrequency = 10;
-			this.trackBar1.Value = 100;
+			this.columnHeader1.Text = "Sound name";
+			this.columnHeader1.Width = 323;
 			// 
-			// tabPage3
+			// columnHeader2
 			// 
-			this.tabPage3.Location = new System.Drawing.Point(4, 22);
-			this.tabPage3.Name = "tabPage3";
-			this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage3.Size = new System.Drawing.Size(511, 139);
-			this.tabPage3.TabIndex = 2;
-			this.tabPage3.Text = "Settings";
-			this.tabPage3.UseVisualStyleBackColor = true;
+			this.columnHeader2.Text = "Progress";
+			this.columnHeader2.Width = 103;
+			// 
+			// columnHeader3
+			// 
+			this.columnHeader3.Text = "Looping";
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(519, 499);
+			this.ClientSize = new System.Drawing.Size(519, 461);
 			this.Controls.Add(this.splitContainer1);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Menu = this.mainMenu1;
@@ -354,8 +384,9 @@
 			this.tabControl1.ResumeLayout(false);
 			this.tabPage1.ResumeLayout(false);
 			this.tabPage2.ResumeLayout(false);
-			this.tabPage2.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
+			this.tabPage3.ResumeLayout(false);
+			this.tabPage3.PerformLayout();
 			this.ResumeLayout(false);
 
 		}
@@ -377,21 +408,25 @@
 		private System.Windows.Forms.MenuItem menuItem3;
 		private System.Windows.Forms.MenuItem menuItem8;
 		private System.Windows.Forms.MenuItem ShowFriendlySoundNames;
-		private LucasStuff.ExplorerThemedTreeView treeView1;
 		private System.Windows.Forms.MenuItem menuItem10;
 		private System.Windows.Forms.MenuItem MMI_RemoveSoundItem;
 		private System.Windows.Forms.MenuItem menuItem9;
 		private System.Windows.Forms.MenuItem menuItem11;
-		private System.Windows.Forms.Button button1;
-		private System.Windows.Forms.TrackBar trackBar1;
 		private System.Windows.Forms.MenuItem menuItem12;
-		private System.Windows.Forms.MenuItem menuItem13;
+		private System.Windows.Forms.MenuItem LoopPlaybackMenuItem;
 		private System.Windows.Forms.MenuItem menuItem14;
+		private System.Windows.Forms.SplitContainer splitContainer1;
 		private System.Windows.Forms.TabControl tabControl1;
 		private System.Windows.Forms.TabPage tabPage1;
+		private LucasStuff.ExplorerThemedTreeView treeView1;
 		private System.Windows.Forms.TabPage tabPage2;
-		private System.Windows.Forms.SplitContainer splitContainer1;
+		private System.Windows.Forms.TrackBar trackBar1;
 		private System.Windows.Forms.TabPage tabPage3;
+		private System.Windows.Forms.MenuItem menuItem15;
+		private LucasStuff.ExplorerThemedListView PlayQueueList;
+		private System.Windows.Forms.ColumnHeader columnHeader1;
+		private System.Windows.Forms.ColumnHeader columnHeader2;
+		private System.Windows.Forms.ColumnHeader columnHeader3;
 	}
 }
 

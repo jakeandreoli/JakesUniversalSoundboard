@@ -76,7 +76,7 @@ namespace JakesSoundboard
 		}
 		#endregion
 
-		#region Form Initisalisation
+		#region Form Init
 		public Form1()
 		{
 			InitializeComponent();
@@ -121,11 +121,14 @@ namespace JakesSoundboard
 			this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form_DragDrop);
 			this.DragLeave += new System.EventHandler(this.Form_DragLeave);
 			this.DragOver += new System.Windows.Forms.DragEventHandler(this.Form_DragOver);
+			this.FormClosing += delegate { this.StopPlayback(); };
 
 			this.LoadDevices();
 			this.PopulateDevices();
 			this.PopulateSounds();
+
 			this.ShowFriendlySoundNames.Checked = this.UserData.UseFriendlyNames;
+			this.LoopPlaybackMenuItem.Checked = this.UserData.LoopEnabled;
 		}
 		#endregion
 
@@ -136,6 +139,12 @@ namespace JakesSoundboard
 		private void CE_CloseProgram(object sender, System.EventArgs e) => this.Close();
 		private void CE_AboutWindow(object sender, System.EventArgs e) => this.CreateAboutWindow();
 		private void CE_VirtualAudioDeviceDownload(object sender, System.EventArgs e) => System.Diagnostics.Process.Start("https://www.vb-audio.com/Cable/index.htm#DownloadCable");
+		private void CE_LoopPlayback(object sender, System.EventArgs e) {
+			this.UserData.LoopEnabled = this.LoopPlaybackMenuItem.Checked = !this.LoopPlaybackMenuItem.Checked;
+			this.UserData.Save(this.SaveFileLocation);
+		}
+		private void CE_DeviceListDoubleClick(object sender, System.Windows.Forms.TreeNodeMouseClickEventArgs e) => e.Node.Checked = !e.Node.Checked;
+		private void CE_StopPlayback(object sender, System.EventArgs e) => StopPlayback();
 		#endregion
 
 		#region Handle Other Windows
@@ -147,9 +156,16 @@ namespace JakesSoundboard
 		#endregion
 
 		#region Device Specific Code
+		private void StopPlayback()
+		{
+			foreach (NAudio.Wave.WasapiOut Playing in this.CurrentlyPlaying)
+			{
+				Playing.Stop();
+			}
+		}
+
 		private void LoadDevices()
 		{
-
 			NAudio.CoreAudioApi.MMDeviceEnumerator enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
 
 			foreach (NAudio.CoreAudioApi.MMDevice device in enumerator.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active))
@@ -354,6 +370,8 @@ namespace JakesSoundboard
 						else
 							throw new System.NotSupportedException();
 
+						if (this.UserData.LoopEnabled) 
+							Stream = new LoopStream(Stream);
 
 						NAudio.Wave.WasapiOut PlayAudio = new NAudio.Wave.WasapiOut((NAudio.CoreAudioApi.MMDevice)((SaveFile.Device)DeviceNode.Tag).CurrentDevice, NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 100);
 						this.CurrentlyPlaying.Add(PlayAudio);
@@ -361,6 +379,7 @@ namespace JakesSoundboard
 							PlayAudio.Init(Stream);
 							PlayAudio.Play();
 						}
+
 						PlayAudio.PlaybackStopped += this.WaveOut_PlaybackStopped;
 					}
 					catch (System.FormatException Ex)
@@ -514,27 +533,5 @@ namespace JakesSoundboard
 			}
 		}
 
-		private void StopPlayingButton(object sender, System.EventArgs e)
-		{
-			foreach (NAudio.Wave.WasapiOut Playing in this.CurrentlyPlaying)
-			{
-				Playing.Stop();
-			}
-		}
-
-		private void DeviceListDoubleClick(object sender, System.Windows.Forms.TreeNodeMouseClickEventArgs e)
-		{
-			e.Node.Checked = !e.Node.Checked;
-		}
-
-		private void treeView1_AfterSelect(object sender, System.Windows.Forms.TreeViewEventArgs e)
-		{
-
-		}
-
-		private void splitContainer1_Panel2_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
-		{
-
-		}
 	}
 }
