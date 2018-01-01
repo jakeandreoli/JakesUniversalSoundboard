@@ -13,7 +13,7 @@
 		private const int Version = 2;
 		private const string Signature = "JUSB";
 
-		public static string[] SupportedFormats = { "MP3", "OGG", "WAV", "AIFF", "AIF", "AIFC", "WAVE" };
+		public static System.Collections.Generic.HashSet<string> SupportedFormats = new System.Collections.Generic.HashSet<string>(new string[]{ ".MP3", ".OGG", ".WAV", ".AIFF", ".AIF", ".AIFC", ".WAVE" }, System.StringComparer.OrdinalIgnoreCase);
 
 		public string CurrentSignature = Signature;
 		public int CurrentVersion = Version;
@@ -26,7 +26,7 @@
 
 		public class Device
 		{
-			public int? CurrentDevice = null;
+			public NAudio.CoreAudioApi.MMDevice CurrentDevice = null;
 			public string DeviceID;
 			public string DeviceFriendlyName = "Unknown Device";
 			public bool Enabled = false;
@@ -90,7 +90,7 @@
 				this.SetFileFormat();
 			}
 
-			public void SetFileFormat()
+			public void SetFileFormat() // HACK?
 			{
 				string PathExtension = System.IO.Path.GetExtension(this.FilePath).Substring(1);
 
@@ -103,7 +103,7 @@
 				else if (string.Equals(PathExtension, "AIFF", System.StringComparison.OrdinalIgnoreCase) || string.Equals(PathExtension, "AIF", System.StringComparison.OrdinalIgnoreCase))
 					this.SndFormat = SoundFormat.AIFF;
 				else
-					throw new System.Exception();
+					throw new System.NotSupportedException();
 			}
 
 			public void Save(System.IO.BinaryWriter Writer)
@@ -142,9 +142,9 @@
 					Writer.Write(Version);
 					Writer.Write(this.LoopEnabled);
 					Writer.Write(this.UseFriendlyNames);
-					Writer.Write(this.Devices.Count);
-					foreach (var Device in this.Devices)
-						Device.Value.Save(Writer);
+					//Writer.Write(this.Devices.Count);
+					//foreach (var Device in this.Devices)
+					//	Device.Value.Save(Writer);
 					Writer.Write(this.Sounds.Count);
 					foreach (var Sound in this.Sounds)
 						Sound.Save(Writer);
@@ -178,16 +178,16 @@
 				this.LoopEnabled = Reader.ReadBoolean();
 				this.UseFriendlyNames = Reader.ReadBoolean();
 
-				int DeviceCount = Reader.ReadInt32();
-				{
-					int i = 0;
-					while (i < DeviceCount)
-					{
-						Device NewDevice = new Device(Reader);
-						this.Devices.Add(NewDevice.DeviceID, NewDevice);
-						++i;
-					}
-				}
+				//int DeviceCount = Reader.ReadInt32();
+				//{
+				//	int i = 0;
+				//	while (i < DeviceCount)
+				//	{
+				//		Device NewDevice = new Device(Reader);
+				//		this.Devices.Add(NewDevice.DeviceID, NewDevice);
+				//		++i;
+				//	}
+				//}
 
 				int SoundCount = Reader.ReadInt32();
 				{

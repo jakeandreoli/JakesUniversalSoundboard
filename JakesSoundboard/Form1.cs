@@ -83,10 +83,10 @@ namespace JakesSoundboard
 		}
 
 
-		public string SaveFileLocation = System.Windows.Forms.Application.StartupPath + System.IO.Path.DirectorySeparatorChar + "Data.jsub";
+		public string SaveFileLocation = System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + "Data.jsub";
 		private SaveFile UserData;
 		private System.Text.RegularExpressions.Regex FriendlyNameGenerator = new System.Text.RegularExpressions.Regex("([A-Z][a-z]+|[A-Z]+(?![a-z])) *");
-		private System.Collections.Generic.List<NAudio.Wave.WaveOutEvent> CurrentlyPlaying = new System.Collections.Generic.List<NAudio.Wave.WaveOutEvent>();
+		private System.Collections.Generic.List<NAudio.Wave.WasapiOut> CurrentlyPlaying = new System.Collections.Generic.List<NAudio.Wave.WasapiOut>();
 
 		private void Form1_Load(object sender, System.EventArgs e)
 		{
@@ -132,9 +132,10 @@ namespace JakesSoundboard
 		#region Click Events
 		private void CE_DisableAllSounds(object sender, System.EventArgs e) => this.DisableAllSounds();
 		private void CE_DeleteSounds(object sender, System.EventArgs e) => this.DeleteSounds();
-		private void CE_PopulateSounds(object sender, System.EventArgs e) => this.PopulateDevices();
+		private void CE_PopulateSounds(object sender, System.EventArgs e) { this.LoadDevices(); this.PopulateDevices(); }
 		private void CE_CloseProgram(object sender, System.EventArgs e) => this.Close();
 		private void CE_AboutWindow(object sender, System.EventArgs e) => this.CreateAboutWindow();
+		private void CE_VirtualAudioDeviceDownload(object sender, System.EventArgs e) => System.Diagnostics.Process.Start("https://www.vb-audio.com/Cable/index.htm#DownloadCable");
 		#endregion
 
 		#region Handle Other Windows
@@ -149,27 +150,27 @@ namespace JakesSoundboard
 		private void LoadDevices()
 		{
 
-			for (int i = 0; i < NAudio.Wave.WaveOut.DeviceCount; i++)
+			NAudio.CoreAudioApi.MMDeviceEnumerator enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+
+			foreach (NAudio.CoreAudioApi.MMDevice device in enumerator.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active))
 			{
-				NAudio.Wave.WaveOutCapabilities WOC = NAudio.Wave.WaveOut.GetCapabilities(i);
-
-				string Key = WOC.ProductGuid.ToString() + WOC.ProductName;
-
+				string Key = device.ID + device.FriendlyName;
 				if (this.UserData.Devices.ContainsKey(Key))
 				{
-					this.UserData.Devices[Key].CurrentDevice = i;
-					this.UserData.Devices[Key].DeviceFriendlyName = WOC.ProductName;
+					this.UserData.Devices[Key].CurrentDevice = device;
+					this.UserData.Devices[Key].DeviceFriendlyName = device.FriendlyName;
 				}
 				else
 				{
 					SaveFile.Device NewDevice = new SaveFile.Device
 					{
-						DeviceID = Key,
-						CurrentDevice = i,
-						DeviceFriendlyName = WOC.ProductName
+						DeviceID = device.ID,
+						CurrentDevice = device,
+						DeviceFriendlyName = device.FriendlyName
 					};
 					this.UserData.Devices.Add(Key, NewDevice);
 				}
+
 			}
 			this.UserData.Save(this.SaveFileLocation);
 		}
@@ -220,8 +221,6 @@ namespace JakesSoundboard
 				this.listView1.EndUpdate();
 			}
 		}
-
-
 
 		private string GetSoundListText(string FilePath)
 		{
@@ -283,7 +282,7 @@ namespace JakesSoundboard
 					continue;
 				}
 
-				string PathExtension = System.IO.Path.GetExtension(Path).ToUpperInvariant().Substring(1);
+				string PathExtension = System.IO.Path.GetExtension(Path);
 
 				if (!SaveFile.SupportedFormats.Contains(PathExtension))
 				{
@@ -335,53 +334,72 @@ namespace JakesSoundboard
 			this.CM_RemoveSound.Text = Text;
 		}
 
+		private void PlaySound(SaveFile.Sound Item)
+		{
+			foreach (System.Windows.Forms.TreeNode DeviceNode in this.treeView1.Nodes)
+			{
+				if (DeviceNode.Checked && DeviceNode.Tag != null && ((SaveFile.Device)DeviceNode.Tag).CurrentDevice != null)
+				{
+					try
+					{
+						NAudio.Wave.WaveStream Stream;
+						if (Item.SndFormat == SoundFormat.OGG)
+							Stream = new NAudio.Vorbis.VorbisWaveReader(Item.FilePath);
+						else if (Item.SndFormat == SoundFormat.WAV)
+							Stream = new NAudio.Wave.WaveFileReader(Item.FilePath);
+						else if (Item.SndFormat == SoundFormat.MP3)
+							Stream = new NAudio.Wave.Mp3FileReader(Item.FilePath);
+						else if (Item.SndFormat == SoundFormat.AIFF)
+							Stream = new NAudio.Wave.AiffFileReader(Item.FilePath);
+						else
+							throw new System.NotSupportedException();
+
+
+						NAudio.Wave.WasapiOut PlayAudio = new NAudio.Wave.WasapiOut((NAudio.CoreAudioApi.MMDevice)((SaveFile.Device)DeviceNode.Tag).CurrentDevice, NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 100);
+						this.CurrentlyPlaying.Add(PlayAudio);
+						{
+							PlayAudio.Init(Stream);
+							PlayAudio.Play();
+						}
+						PlayAudio.PlaybackStopped += this.WaveOut_PlaybackStopped;
+					}
+					catch (System.FormatException Ex)
+					{
+						LucasStuff.Message.Show(Ex.Message, "An error occured while playing", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Error);
+						return;
+					}
+					catch (System.IO.InvalidDataException Ex)
+					{
+						LucasStuff.Message.Show(Ex.Message, "An error occured while playing", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Error);
+						return;
+					}
+					catch (System.IO.FileNotFoundException Ex)
+					{
+						System.Windows.Forms.DialogResult Result = LucasStuff.Message.Show(Ex.Message + "\n\nShould this file be removed from your audio listing?", "An error occured while playing", LucasStuff.Message.Buttons.YesNo, LucasStuff.Message.Icon.Error);
+						if (Result == System.Windows.Forms.DialogResult.Yes)
+						{
+							//this.DeleteSounds(); // HACK: fix this before PC 1.0 Update #1
+						}
+						return;
+					}
+				}
+			}
+		}
+
 		private void SoundViewDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
 			System.Windows.Forms.ListViewHitTestInfo hit = this.listView1.HitTest(e.Location);
 
 			if (hit.Item != null)
 			{
-				foreach (System.Windows.Forms.TreeNode DeviceNode in this.treeView1.Nodes)
-				{
-					if (DeviceNode.Checked && DeviceNode.Tag != null && ((SaveFile.Device)DeviceNode.Tag).CurrentDevice != null)
-					{
-						try
-						{
-							SaveFile.Sound Item = ((SaveFile.Sound)hit.Item.Tag);
-							NAudio.Wave.WaveStream Stream;
-							if (Item.SndFormat == SoundFormat.OGG)
-								Stream = new NAudio.Vorbis.VorbisWaveReader(Item.FilePath);
-							else if (Item.SndFormat == SoundFormat.WAV)
-								Stream = new NAudio.Wave.WaveFileReader(Item.FilePath);
-							else if (Item.SndFormat == SoundFormat.MP3)
-								Stream = new NAudio.Wave.Mp3FileReader(Item.FilePath);
-							else if (Item.SndFormat == SoundFormat.AIFF)
-								Stream = new NAudio.Wave.AiffFileReader(Item.FilePath);
-							else
-								throw new System.NotSupportedException();
-
-							NAudio.Wave.WaveOutEvent waveOut = new NAudio.Wave.WaveOutEvent();
-							this.CurrentlyPlaying.Add(waveOut);
-							{
-								waveOut.DeviceNumber = (int)(((SaveFile.Device)DeviceNode.Tag).CurrentDevice);
-								waveOut.Init(Stream);
-								waveOut.Play();
-							}
-							waveOut.PlaybackStopped += this.WaveOut_PlaybackStopped;
-						}
-						catch (System.FormatException Ex)
-						{
-							LucasStuff.Message.Show(Ex.Message, "An error occured while playing", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Error);
-							break;
-						}
-					}
-				}
-			};
+				SaveFile.Sound Item = ((SaveFile.Sound)hit.Item.Tag);
+				this.PlaySound(Item);
+			}
 		}
 
 		private void WaveOut_PlaybackStopped(object sender, NAudio.Wave.StoppedEventArgs e)
 		{
-			this.CurrentlyPlaying.Remove((NAudio.Wave.WaveOutEvent)sender);
+			this.CurrentlyPlaying.Remove((NAudio.Wave.WasapiOut)sender);
 		}
 
 		private void MMI_AddNewSound(object sender, System.EventArgs e)
@@ -474,21 +492,49 @@ namespace JakesSoundboard
 			{
 				this.DeleteSounds();
 			}
-			if (e.Control && e.KeyCode == System.Windows.Forms.Keys.A)
+			else if (e.Control && e.KeyCode == System.Windows.Forms.Keys.A)
 			{
 				foreach (System.Windows.Forms.ListViewItem Item in this.listView1.Items)
 				{
 					Item.Selected = true;
 				}
 			}
+			else if (e.KeyCode == System.Windows.Forms.Keys.Enter)
+			{
+				if (this.listView1.SelectedItems.Count > 50)
+				{
+					LucasStuff.Message.Show("Can not play more than 50 sounds at a time. You are attempting to play " + this.listView1.SelectedItems.Count + " sounds.", "Unable to play sounds", LucasStuff.Message.Buttons.OK, LucasStuff.Message.Icon.Information, this);
+					return;
+				}
+
+				foreach (System.Windows.Forms.ListViewItem Item in this.listView1.SelectedItems)
+				{
+					this.PlaySound((SaveFile.Sound)Item.Tag);
+				}
+			}
 		}
 
-		private void button1_Click_1(object sender, System.EventArgs e)
+		private void StopPlayingButton(object sender, System.EventArgs e)
 		{
-			foreach (NAudio.Wave.WaveOutEvent Playing in this.CurrentlyPlaying)
+			foreach (NAudio.Wave.WasapiOut Playing in this.CurrentlyPlaying)
 			{
 				Playing.Stop();
 			}
+		}
+
+		private void DeviceListDoubleClick(object sender, System.Windows.Forms.TreeNodeMouseClickEventArgs e)
+		{
+			e.Node.Checked = !e.Node.Checked;
+		}
+
+		private void treeView1_AfterSelect(object sender, System.Windows.Forms.TreeViewEventArgs e)
+		{
+
+		}
+
+		private void splitContainer1_Panel2_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
+		{
+
 		}
 	}
 }
