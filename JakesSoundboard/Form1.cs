@@ -90,7 +90,7 @@ namespace JakesSoundboard
 
 		private void Form1_Load(object sender, System.EventArgs e)
 		{
-			this.Text = this.ProductName + " (" + this.ProductVersion + ")";
+			this.Text = this.ProductName + " (" + Utilities.LucasUtils.FormatVersion(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version) + ")";
 			this.UserData = new SaveFile();
 
 			bool SaveDataExists = System.IO.File.Exists(this.SaveFileLocation);

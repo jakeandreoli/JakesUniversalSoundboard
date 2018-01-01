@@ -16,7 +16,7 @@ namespace JakesSoundboard.Forms
 			InitializeComponent();
 			this.Text = String.Format("About {0}", this.AssemblyTitle);
 			this.labelProductName.Text = this.AssemblyProduct;
-			this.labelVersion.Text = String.Format("Version {0}", this.AssemblyVersion);
+			this.labelVersion.Text = String.Format("Version {0}", Utilities.LucasUtils.FormatVersion(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version));
 			this.labelCopyright.Text = this.AssemblyCopyright;
 			this.labelCompanyName.Text = this.AssemblyCompany;
 			this.textBoxDescription.Text = this.AssemblyDescription;

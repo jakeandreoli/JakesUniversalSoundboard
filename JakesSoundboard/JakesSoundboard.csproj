@@ -124,6 +124,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Utilities\LoopStream.cs" />
+    <Compile Include="Utilities\LucasUtils.cs" />
     <Compile Include="Utilities\Message.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
